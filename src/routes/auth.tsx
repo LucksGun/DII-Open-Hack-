@@ -2,7 +2,6 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
 import villageBg from "@/assets/village-bg.webp.asset.json";
 
 export const Route = createFileRoute("/auth")({
@@ -60,9 +59,11 @@ function AuthPage() {
   async function handleOAuth(provider: "google" | "apple") {
     setLoading(true);
     try {
-      const res = await lovable.auth.signInWithOAuth(provider, { redirect_uri: window.location.origin });
-      if (res.error) throw res.error;
-      if (!res.redirected) nav({ to: "/" });
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: { redirectTo: window.location.origin },
+      });
+      if (error) throw error;
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "ล็อกอินไม่สำเร็จ");
     } finally {

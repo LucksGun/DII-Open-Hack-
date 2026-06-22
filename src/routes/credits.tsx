@@ -42,8 +42,8 @@ function Credits() {
 
         <Section title="ทีมพัฒนา (Developers)">
           <p>• Game Design & Story — ทีมงาน Nylazo</p>
-          <p>• Frontend Engineering — Lovable AI Agent (React + TanStack Start)</p>
-          <p>• Backend & Auth — Lovable Cloud</p>
+          <p>• Frontend Engineering — React + TanStack Start</p>
+          <p>• Backend & Auth — Supabase</p>
           <p>• QA & Playtesting — ผู้เล่นกลุ่ม Beta</p>
         </Section>
 
