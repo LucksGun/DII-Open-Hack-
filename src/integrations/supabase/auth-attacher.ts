@@ -6,10 +6,30 @@ import { supabase } from './client'
 // the browser never attaches the bearer token to serverFn RPCs.
 export const attachSupabaseAuth = createMiddleware({ type: 'function' }).client(
   async ({ next }) => {
-    const { data } = await supabase.auth.getSession()
-    const token = data.session?.access_token
-    return next({
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    })
+    try {
+      // Add a timeout to prevent requests from hanging indefinitely
+      const timeoutPromise = new Promise<{ data: { session: null } }>((resolve) => {
+        setTimeout(() => {
+          console.warn('[attachSupabaseAuth] Auth check timed out after 3s, proceeding without token');
+          resolve({ data: { session: null } });
+        }, 3000);
+      });
+
+      const sessionPromise = supabase.auth.getSession().catch((error) => {
+        console.error('[attachSupabaseAuth] Failed to get session:', error);
+        return { data: { session: null } };
+      });
+
+      const { data } = await Promise.race([sessionPromise, timeoutPromise]);
+      const token = data.session?.access_token;
+      return next({
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+    } catch (error) {
+      console.error('[attachSupabaseAuth] Unexpected error:', error);
+      return next({
+        headers: {},
+      });
+    }
   },
 )

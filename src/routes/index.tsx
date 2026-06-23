@@ -18,15 +18,8 @@ import { ACCESSORIES } from "@/lib/game/accessories";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/")({
-  head: () => ({
-    meta: [
-      { title: "Nylazo: No Lazy — เกมเดินสู้บอส" },
-      { name: "description", content: "หน้าหลักหมู่บ้านไนลาโซ — ทำเควสต์ เก็บไอเทม แล้วเข้าตีบอส" },
-    ],
-  }),
   component: Home,
 });
-
 const MAX_EQUIPPED = 3;
 
 function Home() {
@@ -170,14 +163,28 @@ function Home() {
     (s, id) => s + (ACCESSORIES[id]?.bonus ?? 0), 0,
   );
 
-  if (loading || !user) {
+if (loading) {
     return (
       <main className="grid min-h-screen place-items-center bg-[var(--parchment)]">
-        <p className="text-sm text-muted-foreground">กำลังโหลด...</p>
+        <p className="text-sm text-muted-foreground">กำลังเชื่อมต่อฐานข้อมูล...</p>
       </main>
     );
   }
 
+  if (!user) {
+    return (
+      <main className="grid min-h-screen place-items-center bg-[var(--parchment)]">
+        <p className="text-sm text-destructive font-bold">ไม่มีผู้ใช้! กำลังพยายามไปหน้า /auth ...</p>
+        <button 
+          onClick={() => nav({ to: "/auth" })}
+          className="mt-4 px-4 py-2 bg-black text-white rounded"
+        >
+          บังคับไปหน้า /auth
+        </button>
+      </main>
+    );
+  }
+  
   return (
     <main
       className="relative min-h-screen"

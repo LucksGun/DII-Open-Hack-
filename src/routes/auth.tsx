@@ -23,9 +23,28 @@ function AuthPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) nav({ to: "/" });
-    });
+    let mounted = true;
+    const timeout = setTimeout(() => {
+      // If still checking after 3s, just continue without redirecting
+      if (mounted) {
+        console.warn("[AuthPage] Session check timed out");
+      }
+    }, 3000);
+
+    supabase.auth.getSession()
+      .then(({ data }) => {
+        if (mounted && data.session) {
+          nav({ to: "/" });
+        }
+      })
+      .catch((error) => {
+        console.error("[AuthPage] Failed to get session:", error);
+      });
+
+    return () => {
+      mounted = false;
+      clearTimeout(timeout);
+    };
   }, [nav]);
 
   async function handleEmail(e: React.FormEvent) {

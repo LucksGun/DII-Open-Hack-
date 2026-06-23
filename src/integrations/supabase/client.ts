@@ -3,28 +3,59 @@ import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
 function createSupabaseClient() {
-  // Use import.meta.env for client-side (Vite build-time replacement)
-  // Fall back to process.env for SSR (server-side rendering)
-  const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
-  const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_PUBLISHABLE_KEY;
+  try {
+    // Use import.meta.env for client-side (Vite build-time replacement)
+    // Fall back to process.env for SSR (server-side rendering)
+    const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+    const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_PUBLISHABLE_KEY;
 
-  if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
-    const missing = [
-      ...(!SUPABASE_URL ? ['SUPABASE_URL'] : []),
-      ...(!SUPABASE_PUBLISHABLE_KEY ? ['SUPABASE_PUBLISHABLE_KEY'] : []),
-    ];
-    const message = `Missing Supabase environment variable(s): ${missing.join(', ')}. Set SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY.`;
-    console.error(`[Supabase] ${message}`);
-    throw new Error(message);
-  }
-
-  return createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
-    auth: {
-      storage: typeof window !== 'undefined' ? localStorage : undefined,
-      persistSession: true,
-      autoRefreshToken: true,
+    if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
+      const missing = [
+        ...(!SUPABASE_URL ? ['SUPABASE_URL'] : []),
+        ...(!SUPABASE_PUBLISHABLE_KEY ? ['SUPABASE_PUBLISHABLE_KEY'] : []),
+      ];
+      const message = `Missing Supabase environment variable(s): ${missing.join(', ')}. Set SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY.`;
+      console.error(`[Supabase] ${message}`);
+      // Return a mock client that won't crash the app
+      return createMockClient();
     }
+
+    const client = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+      auth: {
+        storage: typeof window !== 'undefined' ? localStorage : undefined,
+        persistSession: true,
+        autoRefreshToken: true,
+      }
+    });
+    return client;
+  } catch (error) {
+    console.error(`[Supabase] Failed to create client:`, error);
+    return createMockClient();
+  }
+}
+
+function createMockClient() {
+  const mockAuth = {
+    getSession: async () => ({ data: { session: null }, error: null }),
+    onAuthStateChange: () => ({ 
+      data: { subscription: { unsubscribe: () => {} } },
+      error: null 
+    }),
+    signUp: async () => ({ error: new Error('Supabase not configured') }),
+    signInWithPassword: async () => ({ error: new Error('Supabase not configured') }),
+    signInWithOAuth: async () => ({ error: new Error('Supabase not configured') }),
+    signOut: async () => ({ error: null }),
+  };
+
+  const mockFrom = () => ({
+    upsert: async () => ({ data: null, error: null }),
+    select: async () => ({ data: [], error: null }),
   });
+
+  return {
+    auth: mockAuth,
+    from: mockFrom,
+  } as unknown as ReturnType<typeof createClient<Database>>;
 }
 
 let _supabase: ReturnType<typeof createSupabaseClient> | undefined;
