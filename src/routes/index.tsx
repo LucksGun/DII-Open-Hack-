@@ -15,6 +15,7 @@ import {
 } from "@/lib/game/storage";
 import type { DayState, Gender, Mode, PlayerState } from "@/lib/game/types";
 import { ACCESSORIES } from "@/lib/game/accessories";
+import { BOSSES } from "@/lib/game/bosses";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/")({
@@ -32,6 +33,11 @@ function Home() {
   const [day, setDay] = useState<DayState>(() => loadDay(weather.boss, mode));
   const { steps, setSteps, permission, request } = useSteps(day.steps);
   const [devOpen, setDevOpen] = useState(false);
+  const boss = BOSSES[day.weatherBoss];
+  const completedCount = day.quests.filter((q) => q.completed).length;
+  const allQuests = day.quests.length;
+  const readyForBoss = completedCount >= 5;
+  const travelerName = user?.user_metadata?.full_name ?? user?.email?.split("@")[0] ?? "Traveler";
   const logoTapsRef = useRef<{ count: number; last: number }>({ count: 0, last: 0 });
 
   // Navigation Logic
