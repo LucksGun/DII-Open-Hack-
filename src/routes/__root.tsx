@@ -1,9 +1,9 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Outlet, Link, createRootRouteWithContext, useRouter } from "@tanstack/react-router";
+import { Outlet, Link, createRootRoute, useRouter } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { Toaster } from "sonner";
 
-import appCss from "../styles.css?url";
+// Import your styles
+import "../styles.css";
 
 function NotFoundComponent() {
   return (
@@ -48,19 +48,19 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   );
 }
 
-// Strip out the SSR head and shellComponent
-export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
+// 1. We changed this to a simple createRootRoute!
+export const Route = createRootRoute({
   component: RootComponent,
   notFoundComponent: NotFoundComponent,
   errorComponent: ErrorComponent,
 });
 
 function RootComponent() {
-  const { queryClient } = Route.useRouteContext();
+  // 2. We removed the extra QueryClient wrapper because main.tsx already handles it
   return (
-    <QueryClientProvider client={queryClient}>
+    <>
       <Outlet />
       <Toaster position="top-center" richColors />
-    </QueryClientProvider>
+    </>
   );
 }
